@@ -553,6 +553,10 @@ namespace Reflect {
       */
     export declare function deleteMetadata(metadataKey: any, target: any, propertyKey: string | symbol): boolean;
 
+    /**
+     * KC: 这里是一个自执行函数。
+     * 其中 this 是TS中的写法，用来声明函数的this类型，不会出现在实际参数列表中
+     */
     (function (this: any, factory: (exporter: <K extends keyof typeof Reflect>(key: K, value: typeof Reflect[K]) => void, root: any) => void) {
         const root =
             typeof globalThis === "object" ? globalThis :
@@ -561,6 +565,11 @@ namespace Reflect {
             typeof this === "object" ? this :
             sloppyModeThis();
 
+        /**
+         * KC: 这里会构造一个 Reflect 对象
+         * 用来兼容不支持 Reflect 对象的上下文环境
+         * 同时会给 Reflect 扩展一些方法。
+         */
         let exporter = makeExporter(Reflect);
         if (typeof root.Reflect !== "undefined") {
             exporter = makeExporter(root.Reflect, exporter);
@@ -569,6 +578,7 @@ namespace Reflect {
         factory(exporter, root);
 
         if (typeof root.Reflect === "undefined") {
+            // KC: Reflect Polyfill
             root.Reflect = Reflect;
         }
 
@@ -1989,6 +1999,17 @@ namespace Reflect {
                 return key;
             }
 
+            /**
+             * KC: 伪造一个 WeakMap 存储表
+             * 结构：key中的一个部分作为value
+             * key = {
+             *   rootKey:{_key:1}
+             * }
+             * 
+             * value = {_key:1}
+             * @param target 
+             * @param create 
+             */
             function GetOrCreateWeakMapTable<K>(target: K, create: true): HashMap<any>;
             function GetOrCreateWeakMapTable<K>(target: K, create: false): HashMap<any> | undefined;
             function GetOrCreateWeakMapTable<K>(target: K, create: boolean): HashMap<any> | undefined {
@@ -2037,3 +2058,19 @@ namespace Reflect {
         }
     });
 }
+
+/**
+ * KC：本质就是构建了管理 metadata 数据的map。
+ * 提供了相关的API来操作对应的元数据，这些API集成在 Reflect 这个对象集合中。
+ * metadata数据的存储数据结构如下：
+ * {
+ *   [object or class ctor]:{
+ *     [propName]:{
+ *       metadataKey: metadataValue
+ *      }
+ *   }
+ * }
+ * 
+ * 关键点：
+ * 1. propKey 可以是 undefined。类修饰器中读写metadata时对应的key就是undefined
+ */
