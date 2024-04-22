@@ -1190,6 +1190,13 @@ namespace Reflect {
 
         // 3.1.3.1 OrdinaryGetMetadata(MetadataKey, O, P)
         // https://rbuckton.github.io/reflect-metadata/#ordinarygetmetadata
+        /**
+         * 获取metadata的时候，会沿着原型链向上获取。
+         * @param MetadataKey 
+         * @param O 
+         * @param P 
+         * @returns 
+         */
         function OrdinaryGetMetadata(MetadataKey: any, O: any, P: string | symbol | undefined): any {
             const hasOwn = OrdinaryHasOwnMetadata(MetadataKey, O, P);
             if (hasOwn) return OrdinaryGetOwnMetadata(MetadataKey, O, P);
@@ -2073,4 +2080,7 @@ namespace Reflect {
  * 
  * 关键点：
  * 1. propKey 可以是 undefined。类修饰器中读写metadata时对应的key就是undefined
+ * 2. 查找metadata的时候，会沿着原型链依次向上获取。
+ *    这里猜测 TS 在编译时默认给类的方法和属性增加metadata时，是绑定在实例对应的原型对象上的。
+ *    这有这样才能后续被其他实例获取到。
  */
